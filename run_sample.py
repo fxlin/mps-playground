@@ -56,4 +56,18 @@ def test_softshrink():
     test_speedup()
 
 if __name__ == "__main__":
-    test_softshrink()
+    # test_softshrink()
+    # xzl
+    mygelu = MPSGeLU()
+    ref = nn.GELU()
+    ref2 = nn.ReLU()
+
+    inputdata = torch.randn(256, 784, 326, device=mps_device, dtype=torch.float)
+    output = mygelu(inputdata)
+    output1 = ref(inputdata)
+    output2 = ref2(inputdata)
+
+    print(output)
+    # torch.testing.assert_close(output, output1)
+    torch.testing.assert_close(output, output2)
+

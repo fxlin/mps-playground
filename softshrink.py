@@ -24,10 +24,18 @@ class MPSSoftshrink(nn.Module):
         self.lambd = lambd
 
     def forward(self, input):
-        return compiled_lib.mps_softshrink(input, self.lambd)
+        # return compiled_lib.mps_softshrink(input, self.lambd)
+        return compiled_lib1.mps_softshrink(input, self.lambd)      # xzl: my exp
 
     def extra_repr(self):
         return str(self.lambd)
+
+class MPSGeLU(nn.Module):
+    def __init__(self): 
+        super().__init__()
+
+    def forward(self, input):
+        return compiled_lib1.mps_gelu(input) 
 
 # Wrapper over the Sequential layer, using the custom MPS kernel soft shrink implementation.
 class CustomMPSSoftshrinkModel(nn.Module):
