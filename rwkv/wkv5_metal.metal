@@ -20,7 +20,7 @@ kernel void kernel_forward(
     const device F* const _r, 
     const device F* const _k, 
     const device F* const _v, 
-    const device F* _w, 
+    const device float* _w, 
     const device F* _u, 
     device F* const _y,
     uint3 tgpig[[threadgroup_position_in_grid]],
@@ -80,6 +80,7 @@ kernel void kernel_forward(
             s.w = s.w * w_.w + x.w;
         }
         _y[t] = F(y);  // xzl: output the scalar (current timestep) to global var. F: typename        
+        // _y[t] = static_cast<F>(y);  // seems ok
     }
 }
 
