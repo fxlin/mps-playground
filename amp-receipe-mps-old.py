@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# fxl: https://github.com/pytorch/tutorials/blob/main/recipes_source/recipes/amp_recipe.py
+'''
+ fxl: https://github.com/pytorch/tutorials/blob/main/recipes_source/recipes/amp_recipe.py
+
+ /Users/felixlin/workspace-mps/myenv-python312/bin/python3 amp-receipe-mps-old.py
+'''
 
 """
 Automatic Mixed Precision
@@ -31,6 +35,7 @@ Run ``nvidia-smi`` to display your GPU's architecture.
 """
 
 import torch, time, gc
+import sys
 
 # Timing utilities
 start_time = None
@@ -62,7 +67,10 @@ def make_model(in_size, out_size, num_layers):
         layers.append(torch.nn.Linear(in_size, in_size))
         layers.append(torch.nn.ReLU())
     layers.append(torch.nn.Linear(in_size, out_size))
-    return torch.nn.Sequential(*tuple(layers)).to('mps')
+    # return torch.nn.Sequential(*tuple(layers)).to('mps')
+    return torch.nn.Sequential(*tuple(layers)).to('mps').half()  # fxl, convert to half precision
+    
+# input("Press any key to continue...")
 
 ##########################################################
 # ``batch_size``, ``in_size``, ``out_size``, and ``num_layers`` are chosen to be large enough to saturate the GPU with work.
@@ -77,7 +85,8 @@ batch_size = 512 # Try, for example, 128, 256, 513.
 in_size = 4096
 out_size = 4096
 num_layers = 3
-num_batches = 50
+# num_batches = 50
+num_batches = 5   # fxl 
 epochs = 3
 
 # device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -104,6 +113,8 @@ start_timer()
 torch.mps.profiler.start(mode="interval", wait_until_completed=True)
 for epoch in range(epochs):
     for input, target in zip(data, targets):
+        input = input.half()
+        target = target.half()
         output = net(input)
         loss = loss_fn(output, target)
         loss.backward()
@@ -111,6 +122,7 @@ for epoch in range(epochs):
         opt.zero_grad() # set_to_none=True here can modestly improve performance
 end_timer_and_print("Default precision:")
 torch.mps.profiler.stop()
+# sys.exit(0)
 
 ##### fxl, profile default precison. can only do cpu. no metal kernel time counted
 '''
@@ -219,6 +231,7 @@ scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 # scaler = torch.amp.GradScaler("mps")
 
 start_timer()
+torch.mps.profiler.start(mode="interval", wait_until_completed=True)
 for epoch in range(epochs):
     for input, target in zip(data, targets):
         with torch.autocast(device_type=device, dtype=torch.float16, enabled=use_amp):
@@ -229,6 +242,7 @@ for epoch in range(epochs):
         scaler.update()
         opt.zero_grad() # set_to_none=True here can modestly improve performance
 end_timer_and_print("Mixed precision:")
+torch.mps.profiler.stop()
 
 ##########################################################
 # Inspecting/modifying gradients (e.g., clipping)
